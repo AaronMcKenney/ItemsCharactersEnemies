@@ -24,15 +24,15 @@ def printStats(csocket, option, msg):
 	
 	if option == StatsMsg.monster and inBattle == False:
 		inBattle = True
-		print 'A monster draws near your party!'
-	print msg
+		print('A monster draws near your party!')
+	print(msg)
 		
 	csocket.sendall(StatsMsg.ack)
 
 def inBattle(csocket, option, message):
 	if option == AttackMsg.one or option == AttackMsg.many:
 		#Print what attacks the client's character can make
-		print message
+		print(message)
 		csocket.sendall(AttackMsg.ack)
 	elif option == AttackMsg.num:
 		#Server is requesting the client to make an attack
@@ -42,12 +42,12 @@ def inBattle(csocket, option, message):
 			try:
 				chosenAttack = int(raw_input("Choose an attack (enter number between 1 and " + str(numAttacks) + "): "))
 			except ValueError:
-				print 'Not an integer'
+				print('Not an integer')
 				chosenAttack = -1
 		csocket.sendall(AttackMsg.num + str(chosenAttack))
 	elif option == AttackMsg.many:
 		#Server is printing results of an attack made
-		print message
+		print(message)
 	
 def main():
 	if len(sys.argv) < 3:
@@ -87,16 +87,16 @@ def main():
 			
 			elif msgHead == EndMsg.head:
 				if msg == EndMsg.loss:
-					print 'Your party has lost!'
+					print('Your party has lost!')
 					csocket.sendall(EndMsg.ack)
 				else:
-					print 'Your party has won!'
+					print('Your party has won!')
 					csocket.sendall(EndMsg.ack)
 				csocket.close()
 				return
 			
 			else:
-				print 'Server sent a bad message: ', msg
+				print('Server sent a bad message: ', msg)
 	finally:
 			csocket.close()
 

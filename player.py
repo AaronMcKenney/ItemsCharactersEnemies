@@ -101,7 +101,7 @@ class Player(object):
 		#List your own stats first, and then list everyone elses
 		self.send(StatsMsg.party + ownStats + otherPlayerStats)
 		if self.recv() != StatsMsg.ack:
-			print self.name + ' did not receive party stats'
+			print(self.name + ' did not receive party stats')
 		
 	def isAlive(self):
 		return self.character.isAlive()

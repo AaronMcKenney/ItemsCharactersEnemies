@@ -89,7 +89,7 @@ def clientThread(csocket, caddr, cname):
 		connections.pop(connections.index((csocket, caddr, cname)))
 		if isReady == True:
 			numReady -= 1
-		print caddr[0] + ' closed!'
+		print(caddr[0] + ' closed!')
 		return
 
 	#Client ready to begin
@@ -165,7 +165,7 @@ def battle(curMonster):
 	
 	#Ensures that a player can only be lost from this battle
 	if len(players) == 0:
-		print 'no players in battle!'
+		print('no players in battle!')
 		return 0
 	for player in connected(players):
 		player.send(StatsMsg.monster + curMonster.getStats())
@@ -188,7 +188,7 @@ def battle(curMonster):
 					#Pray that they reconnect before the next battle
 					turnList.remove(thing)
 					thing.disconnect()
-					print thing.getName() + ' did not recv attack attack msg. Booting from battle'
+					print(thing.getName() + ' did not recv attack attack msg. Booting from battle')
 					if len(connected(players)) == 0:
 						return 0
 					continue
@@ -202,7 +202,7 @@ def battle(curMonster):
 					#Remove them from battle and put them in the corner
 					turnList.remove(thing)
 					thing.disconnect()
-					print thing.getName() + ' did not recv attack index msg. Booting from battle'
+					print(thing.getName() + ' did not recv attack index msg. Booting from battle')
 					if len(connected(players)) == 0:
 						return 0
 					continue
@@ -218,7 +218,7 @@ def battle(curMonster):
 						#Pray that they reconnect before the next battle
 						turnList.remove(player)
 						player.disconnect()
-						print player.getName() + ' did not recv player attack attack msg. Booting from battle'
+						print(player.getName() + ' did not recv player attack attack msg. Booting from battle')
 				if len(connected(players)) == 0:
 					return 0
 				if not curMonster.isAlive():
@@ -235,7 +235,7 @@ def battle(curMonster):
 					if msg != AttackMsg.ack:
 						turnList.remove(player)
 						player.disconnect()
-						print player.getName() + ' did not recv monster attack attack msg. Booting from battle'
+						print(player.getName() + ' did not recv monster attack attack msg. Booting from battle')
 				if len(connected(players)) == 0:
 					return 0
 				if not partyLives(players):
@@ -283,17 +283,18 @@ def main():
 	
 	if res == -1:
 		end = EndMsg.loss
-		print 'the party has lost'
+		print('the party has lost')
 	elif res == 1:
 		end = EndMsg.win
-		print 'the party has won'
+		print('the party has won')
 	else:
-		print 'the party has left/disconnected ;~;'
+		print('the party has left/disconnected ;~;')
 	for player in connected(players):
 		player.send(end)
 		if player.recv() != EndMsg.ack:
-				print player.getName() + ' did not get EndMsg'				
+				print(player.getName() + ' did not get EndMsg')		
 	
-	print 'shutting down'
+	print('shutting down')
+
 if __name__ == '__main__':
 	main()
