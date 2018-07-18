@@ -7,63 +7,63 @@ optionLen = headerLen + 2
 
 #Client sends name upon connecting to server
 class NameMsg:
-	head = 'N'
+	head = b'N'
 
 class LobbyMsg:
-	head = 'L'
+	head = b'L'
 
 	#Server related lobby messages
-	connect = head + 'C:'
-	waitOnOthers = head + 'W:'
-	beginGame = head + 'B:'
+	connect = head + b'C:'
+	waitOnOthers = head + b'W:'
+	beginGame = head + b'B:'
 	#Client related lobby messages
-	ready = head + 'Y:'
-	notReady = head + 'N:'
+	ready = head + b'Y:'
+	notReady = head + b'N:'
 
 #Server sends stats to clients
 #Client requests stats from clients
 class StatsMsg:
-	head = 'S'
+	head = b'S'
 
 	#Server related stats messages
-	self = head + 'Y:'
-	party = head + 'P:'
-	monster = head + 'M:'
+	self = head + b'Y:'
+	party = head + b'P:'
+	monster = head + b'M:'
 	#Cliient related stats messages
-	ack = head + 'A:'
+	ack = head + b'A:'
 	
 #Make sure that a client is alive
 class ConnMsg:
-	head = 'P'
+	head = b'P'
 	
 	#Server related message
-	ping = head + 'I:'
+	ping = head + b'I:'
 	#Client related message
-	pong = head + 'O:'
+	pong = head + b'O:'
 
 class AttackMsg:
-	head = 'A'
+	head = b'A'
 	
 	#Server requests an attack from client,
 	#client responds with ack
-	one = head + 'O:'
+	one = head + b'O:'
 	#Server sends number of attacks to client
 	#Client responds with an attack
-	num = head + 'N:'
+	num = head + b'N:'
 	#Server calculates an attack, and relays the 
 	#results to all clients.
 	#Client responds with an ack
-	many = head + 'M:'
+	many = head + b'M:'
 	
-	ack = head + 'A:'
+	ack = head + b'A:'
 	
 class EndMsg:
-	head = 'E'
+	head = b'E'
 	
 	#Server says party wins
-	win = head + 'W:'
+	win = head + b'W:'
 	#Server says party loses
-	loss = head + 'L:'
+	loss = head + b'L:'
 	
 	#Client says ack
-	ack = head + 'A:'
+	ack = head + b'A:'

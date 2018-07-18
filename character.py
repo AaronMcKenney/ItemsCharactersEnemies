@@ -18,7 +18,7 @@ class Character(object):
 		statsOut += '\tHP: ' + str(self.health) + '/' + str(self.maxHealth) + '\n'
 		statsOut += '\tMP: ' + str(self.mana) + '/' + str(self.maxMana) + '\n'
 
-		return statsOut
+		return statsOut.encode()
 		
 	def getAttacksStr(self):
 		attacksOut = '\tAttacks: \n'
@@ -27,7 +27,7 @@ class Character(object):
 			count += 1
 			attacksOut += '\t\t' + str(count) + ". " + attack['Name'] + ": " + str(attack['Damage']) + '\n'
 		
-		return attacksOut
+		return attacksOut.encode()
 
 	def getAttack(self, index):
 		return self.attacks[index]
@@ -62,4 +62,4 @@ class Character(object):
 			
 		resultStr += '\n'
 		
-		return resultStr
+		return resultStr.encode()

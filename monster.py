@@ -18,14 +18,14 @@ class Monster(object):
 		statsOut += '\tDescription: ' + self.description + '\n'
 		statsOut += '\tHP: ' + str(self.health) + '/' + str(self.maxHealth) + '\n'
 
-		return statsOut
+		return statsOut.encode()
 
 	def getAttacksStr(self):
 		attacksOut = '\tAttacks: \n'
 		for attack in self.attacks:
 			attacksOut += '\t\t' + attack['Name'] + ": " + str(attack['Damage']) + '\n'
 		
-		return attacksOut
+		return attacksOut.encode()
 		
 	def getAttack(self, index):
 		return self.attacks[index]
@@ -61,4 +61,4 @@ class Monster(object):
 		
 		resultStr += '\n'
 		
-		return resultStr
+		return resultStr.encode()

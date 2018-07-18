@@ -36,7 +36,7 @@ class Player(object):
 	def recv(self):
 		try:
 			msg = self.sock.recv(1024)
-			if msg == '':
+			if msg == b'':
 				raise socket.error
 			return msg
 		except socket.error:
@@ -72,7 +72,7 @@ class Player(object):
 		return self.character.getName()
 			
 	def getStats(self):
-		return "Player name: " + self.name + "\n" + self.character.getStats()
+		return b'Player name: ' + self.name.encode() + b'\n' + self.character.getStats()
 
 	def getAttacksStr(self):
 		return self.character.getAttacksStr()
@@ -84,11 +84,11 @@ class Player(object):
 		return self.character.getNumAttacks()
 
 	def sendPartyStats(self, plist):
-		ownStats = 'You:\n'
+		ownStats = b'You:\n'
 		if len(plist) != 1:
-			otherPlayerStats = '\nYour Party:\n'
+			otherPlayerStats = b'\nYour Party:\n'
 		else:
-			otherPlayerStats = ''
+			otherPlayerStats = b''
 			
 		for player in plist:
 			if self.__eq__(player):
@@ -101,7 +101,7 @@ class Player(object):
 		#List your own stats first, and then list everyone elses
 		self.send(StatsMsg.party + ownStats + otherPlayerStats)
 		if self.recv() != StatsMsg.ack:
-			print(self.name + ' did not receive party stats')
+			print(self.name + b' did not receive party stats')
 		
 	def isAlive(self):
 		return self.character.isAlive()

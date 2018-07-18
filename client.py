@@ -8,9 +8,9 @@ inBattle = False
 
 def enterLobby(csocket, msg):
 	if msg == LobbyMsg.connect:
-		lobbyRes = "N"
-		while(lobbyRes != "Y" and lobbyRes != "y"):
-			lobbyRes = raw_input("Ready to begin? (Y/N) ")
+		lobbyRes = 'N'
+		while(lobbyRes != 'Y' and lobbyRes != 'y'):
+			lobbyRes = input('Ready to begin? (Y/N) ')
 		csocket.sendall(LobbyMsg.ready)
 
 	elif msg == LobbyMsg.waitOnOthers:
@@ -25,29 +25,29 @@ def printStats(csocket, option, msg):
 	if option == StatsMsg.monster and inBattle == False:
 		inBattle = True
 		print('A monster draws near your party!')
-	print(msg)
+	print(msg.decode())
 		
 	csocket.sendall(StatsMsg.ack)
 
-def inBattle(csocket, option, message):
+def inBattle(csocket, option, msg):
 	if option == AttackMsg.one or option == AttackMsg.many:
 		#Print what attacks the client's character can make
-		print(message)
+		print(msg.decode())
 		csocket.sendall(AttackMsg.ack)
 	elif option == AttackMsg.num:
 		#Server is requesting the client to make an attack
-		numAttacks = int(message)
+		numAttacks = int(msg.decode())
 		chosenAttack = -1
 		while chosenAttack < 1 or chosenAttack > numAttacks:
 			try:
-				chosenAttack = int(raw_input("Choose an attack (enter number between 1 and " + str(numAttacks) + "): "))
+				chosenAttack = int(input('Choose an attack (enter number between 1 and ' + str(numAttacks) + '): '))
 			except ValueError:
 				print('Not an integer')
 				chosenAttack = -1
-		csocket.sendall(AttackMsg.num + str(chosenAttack))
+		csocket.sendall(AttackMsg.num + str(chosenAttack).encode())
 	elif option == AttackMsg.many:
 		#Server is printing results of an attack made
-		print(message)
+		print(msg.decode())
 	
 def main():
 	if len(sys.argv) < 3:
@@ -60,11 +60,11 @@ def main():
 	csocket.connect((saddr, 80))
 
 	try:
-		csocket.sendall(NameMsg.head + cname)
+		csocket.sendall(NameMsg.head + cname.encode())
 		while(1):
 			try:
 				msg = csocket.recv(1024)
-				if msg == '':
+				if msg == b'':
 					raise socket.error
 			except socket.error as e:
 				print("Didn't receive data from the server!")

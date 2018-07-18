@@ -51,12 +51,12 @@ def serverThread(ssocket):
 		#Upon connection, get the client's name
 		try:
 			msg = csocket.recv(1024)
-			if msg == '' or msg[0:headerLen] != NameMsg.head:
+			if msg == b'' or msg[0:headerLen] != NameMsg.head:
 				raise socket.error
 		except socket.error as e:
 			csocket.close()
 			return
-		cname = msg[headerLen:]
+		cname = msg[headerLen:].decode()
 
 		numConnections += 1
 		
@@ -81,7 +81,7 @@ def clientThread(csocket, caddr, cname):
 	#Receive client messages
 	try:
 		msg = csocket.recv(1024)
-		if msg == '':
+		if msg == b'':
 			raise socket.error
 	except socket.error as e:
 		csocket.close()
@@ -177,38 +177,38 @@ def battle(curMonster):
 	shuffle(turnList)
 	
 	while(curMonster.isAlive() and partyLives(connected(players))):
-		for thing in turnList:
-			if type(thing) is Player and thing.isAlive():
+		for entity in turnList:
+			if type(entity) is Player and entity.isAlive():
 				#Tell the player it's their turn
-				thing.send(AttackMsg.one + '\nYour turn!\n' + thing.getAttacksStr())
-				msg = thing.recv()
+				entity.send(AttackMsg.one + b'\nYour turn!\n' + entity.getAttacksStr())
+				msg = entity.recv()
 				if msg != AttackMsg.ack:
 					#Assume a disconnect, remove them from this battle
 					#Pray that they reconnect before the next battle
-					turnList.remove(thing)
-					thing.disconnect()
-					print(thing.getName() + ' did not recv attack attack msg. Booting from battle')
+					turnList.remove(entity)
+					entity.disconnect()
+					print(entity.getName() + ' did not recv attack attack msg. Booting from battle')
 					if len(connected(players)) == 0:
 						return 0
 					continue
 					
 				#Ask the player to choose an attack
-				thing.send(AttackMsg.num + str(thing.getNumAttacks()))
-				chosenAttack = thing.recv()
-				attackIndex = thing.getLegalAttackIndex(chosenAttack)
+				entity.send(AttackMsg.num + str(entity.getNumAttacks()).encode())
+				chosenAttack = entity.recv()
+				attackIndex = entity.getLegalAttackIndex(chosenAttack)
 				if attackIndex == -1:
 					#Illegal (or bad) attack
 					#Remove them from battle and put them in the corner
-					turnList.remove(thing)
-					thing.disconnect()
-					print(thing.getName() + ' did not recv attack index msg. Booting from battle')
+					turnList.remove(entity)
+					entity.disconnect()
+					print(entity.getName() + ' did not recv attack index msg. Booting from battle')
 					if len(connected(players)) == 0:
 						return 0
 					continue
-				chosenAttack = thing.getAttack(attackIndex-1)
+				chosenAttack = entity.getAttack(attackIndex-1)
 
 				#Send results of attack to all players
-				resultStr = curMonster.hit(thing, chosenAttack)
+				resultStr = curMonster.hit(entity, chosenAttack)
 				for player in connected(players):
 					player.send(AttackMsg.many + resultStr)
 					msg = player.recv()
@@ -239,14 +239,15 @@ def battle(curMonster):
 					return 0
 				if not partyLives(players):
 					return -1
+				
 def main():
 	global everyoneReady, mode, players
 
 	ssocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	try:
 		ssocket.bind(('', 80))
-	except socket.error as msg:
-		print("Bind failed. Error code: " + str(msg[0]))
+	except socket.error as err_msg:
+		print("Bind failed. Error code: " + str(err_msg[0]))
 		quit()
 
 	ssocket.listen(5)
@@ -282,7 +283,7 @@ def main():
 	
 	if res == -1:
 		end = EndMsg.loss
-		print('the party has lost')
+		print('The party has lost')
 	elif res == 1:
 		end = EndMsg.win
 		print('the party has won')
