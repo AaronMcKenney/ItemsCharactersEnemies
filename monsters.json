@@ -1,0 +1,27 @@
+{
+"Monsters":[
+	{"Name":"Slime", 
+		"Description":"A slime monster. How original", 
+		"Health":20, 
+		"Attacks":[
+			{"Name":"Lick", "Damage":5},
+			{"Name":"Jiggle", "Damage":0}
+		]
+	},
+	{"Name":"Cyborg Potato", 
+		"Description":"The world's most advanced Potato AI.", 
+		"Health":25, 
+		"Attacks":[
+			{"Name":"Fun laser blast", "Damage":15},
+			{"Name":"Hot Potato", "Damage":10}
+		]
+	},
+	{"Name":"Goat Lady", 
+		"Description":"Traps Children underground and doesn't let them leave.", 
+		"Health":30, 
+		"Attacks":[
+			{"Name":"Fireballs", "Damage":30}
+		]
+	}
+]
+}
