@@ -1,7 +1,7 @@
 import sys
 import time
 import socket
-import thread
+import _thread
 import threading
 import json
 from random import shuffle
@@ -65,7 +65,7 @@ def serverThread(ssocket):
 			connections.append((csocket, caddr, cname))
 			print("New connection: " + cname + " at " + caddr[0])
 			csocket.sendall(LobbyMsg.connect)
-			thread.start_new_thread(clientThread, (csocket, caddr, cname))
+			_thread.start_new_thread(clientThread, (csocket, caddr, cname))
 
 		elif mode == inCombat:
 			for player in disconnected(players):
@@ -112,7 +112,6 @@ def clientThread(csocket, caddr, cname):
 			numReady -= 1
 			isReady = False
 			print(caddr[0] + " is not ready!")
-
 
 def createPlayers():
 	global connections
@@ -253,7 +252,7 @@ def main():
 	ssocket.listen(5)
 	print("Server ready")
 
-	thread.start_new_thread(serverThread, (ssocket,))
+	_thread.start_new_thread(serverThread, (ssocket,))
 
 	#If everyone is ready, start the game
 	everyoneReady.acquire()
