@@ -178,21 +178,8 @@ def battle(curMonster):
 	while(curMonster.isAlive() and partyLives(connected(players))):
 		for entity in turnList:
 			if type(entity) is Player and entity.isAlive():
-				#Tell the player it's their turn
-				entity.send(AttackMsg.one + b'\nYour turn!\n' + entity.getAttacksStr())
-				msg = entity.recv()
-				if msg != AttackMsg.ack:
-					#Assume a disconnect, remove them from this battle
-					#Pray that they reconnect before the next battle
-					turnList.remove(entity)
-					entity.disconnect()
-					print(entity.getName() + ' did not recv attack attack msg. Booting from battle')
-					if len(connected(players)) == 0:
-						return 0
-					continue
-					
 				#Ask the player to choose an attack
-				entity.send(AttackMsg.num + str(entity.getNumAttacks()).encode())
+				entity.send(AttackMsg.request + str(entity.getNumAttacks()).encode())
 				chosenAttack = entity.recv()
 				attackIndex = entity.getLegalAttackIndex(chosenAttack)
 				if attackIndex == -1:
@@ -209,7 +196,7 @@ def battle(curMonster):
 				#Send results of attack to all players
 				resultStr = curMonster.hit(entity, chosenAttack)
 				for player in connected(players):
-					player.send(AttackMsg.many + resultStr)
+					player.send(AttackMsg.result + resultStr)
 					msg = player.recv()
 					if msg != AttackMsg.ack:
 						#Assume a disconnect, remove them from this battle
@@ -228,7 +215,7 @@ def battle(curMonster):
 				(chosenPlayer, chosenAttack) = curMonster.getRandAttack(players)
 				resultStr = chosenPlayer.hit(curMonster, chosenAttack)
 				for player in connected(players):
-					player.send(AttackMsg.many + resultStr)
+					player.send(AttackMsg.result + resultStr)
 					msg = player.recv()
 					if msg != AttackMsg.ack:
 						turnList.remove(player)

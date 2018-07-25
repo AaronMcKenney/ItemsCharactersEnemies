@@ -30,12 +30,13 @@ def printStats(csocket, option, msg):
 	csocket.sendall(StatsMsg.ack)
 
 def inBattle(csocket, option, msg):
-	if option == AttackMsg.one or option == AttackMsg.many:
-		#Print what attacks the client's character can make
+	if option == AttackMsg.result:
+		#Print the results of an attack made by an entity
 		print(msg.decode())
 		csocket.sendall(AttackMsg.ack)
-	elif option == AttackMsg.num:
+	elif option == AttackMsg.request:
 		#Server is requesting the client to make an attack
+		print('Your turn!!')
 		numAttacks = int(msg.decode())
 		chosenAttack = -1
 		while chosenAttack < 1 or chosenAttack > numAttacks:
@@ -44,10 +45,7 @@ def inBattle(csocket, option, msg):
 			except ValueError:
 				print('Not an integer')
 				chosenAttack = -1
-		csocket.sendall(AttackMsg.num + str(chosenAttack).encode())
-	elif option == AttackMsg.many:
-		#Server is printing results of an attack made
-		print(msg.decode())
+		csocket.sendall(AttackMsg.response + str(chosenAttack).encode())
 	
 def main():
 	if len(sys.argv) < 3:

@@ -114,7 +114,7 @@ class Player(object):
 		if len(attackStr) > optionLen + 1:
 			return -1
 		option = attackStr[0:optionLen]
-		if option != AttackMsg.num:
+		if option != AttackMsg.response:
 			return -1
 		try:
 			attack = int(attackStr[optionLen:])

@@ -44,16 +44,14 @@ class ConnMsg:
 class AttackMsg:
 	head = b'A'
 	
-	#Server requests an attack from client,
-	#client responds with ack
-	one = head + b'O:'
-	#Server sends number of attacks to client
+	#Server sends number of attacks to client and requests client to pick one
+	request = head + b'Q:'
 	#Client responds with an attack
-	num = head + b'N:'
+	response = head + b'A:'
 	#Server calculates an attack, and relays the 
 	#results to all clients.
 	#Client responds with an ack
-	many = head + b'M:'
+	result = head + b'R:'
 	
 	ack = head + b'A:'
 	
