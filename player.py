@@ -11,7 +11,7 @@ class Player(object):
 		self.waitForNextBattle = False
 		self.addr = paddr
 		self.name = pname
-		self.character = Character(charinfo['Name'], charinfo['Description'], charinfo['Health'], charinfo['Mana'], charinfo['Attacks'])
+		self.character = Character(charinfo['Name'], charinfo['Description'], charinfo['Health'], charinfo['Attacks'])
 
 	def __del__(self):
 		self.sock.close()

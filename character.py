@@ -1,12 +1,10 @@
 class Character(object):
 
-	def __init__(self, cname, cdesc, chealth, cmana, cattacks):
+	def __init__(self, cname, cdesc, chealth, cattacks):
 		self.name = cname
 		self.description = cdesc
 		self.maxHealth = chealth
 		self.health = chealth
-		self.maxMana = cmana
-		self.mana = cmana
 		self.attacks = cattacks
 
 	def getName(self):
@@ -16,7 +14,6 @@ class Character(object):
 		statsOut = 'Character name: ' + self.name + '\n'
 		statsOut += '\tDescription: ' + self.description + '\n'
 		statsOut += '\tHP: ' + str(self.health) + '/' + str(self.maxHealth) + '\n'
-		statsOut += '\tMP: ' + str(self.mana) + '/' + str(self.maxMana) + '\n'
 
 		return statsOut.encode()
 		
