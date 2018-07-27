@@ -31,15 +31,6 @@ class StatsMsg:
 	monster = head + b'M:'
 	#Cliient related stats messages
 	ack = head + b'A:'
-	
-#Make sure that a client is alive
-class ConnMsg:
-	head = b'P'
-	
-	#Server related message
-	ping = head + b'I:'
-	#Client related message
-	pong = head + b'O:'
 
 class AttackMsg:
 	head = b'A'

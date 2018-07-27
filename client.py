@@ -75,10 +75,6 @@ def main():
 
 			elif msgHead == StatsMsg.head:
 				printStats(csocket, msg[0:optionLen], msg[optionLen:])
-				
-			elif msgHead == ConnMsg.head:
-				if msg == ConnMsg.ping:
-					csocket.sendall(ConnMsg.pong)
 					
 			elif msgHead == AttackMsg.head:
 				inBattle(csocket, msg[0:optionLen], msg[optionLen:])
