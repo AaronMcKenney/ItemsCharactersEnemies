@@ -13,7 +13,6 @@ from monster import *
 numConnections = 0
 numReady = 0
 everyoneReady = threading.Condition()
-connections = []
 players = []
 
 #mode that the game is in and potential values (enum) for mode
@@ -28,6 +27,7 @@ def connected(players):
 	for player in players:
 		if player.isConnected():
 			connectedPlayers.append(player)
+			
 	return connectedPlayers
 
 def disconnected(players):
@@ -36,6 +36,7 @@ def disconnected(players):
 	for player in players:
 		if not player.isConnected():
 			disconnectedPlayers.append(player)
+			
 	return disconnectedPlayers
 
 def enableAll(players):
@@ -43,37 +44,48 @@ def enableAll(players):
 		player.enable()
 	
 def serverThread(ssocket):
-	global numConnections, connections, players
+	global numConnections, players
 
 	while 1:
 		(csocket, caddr) = ssocket.accept()
 		#Upon connection, get the client's name
 		try:
 			msg = csocket.recv(1024)
-			if msg == b'' or msg[0:headerLen] != NameMsg.head:
+			if msg == b'' or msg[0:optionLen] != NameMsg.name:
 				raise socket.error
 		except socket.error as e:
 			csocket.close()
 			return
-		cname = msg[headerLen:].decode()
+		cname = msg[optionLen:].decode()
+		
+		badName = False
+		for player in connected(players):
+			if cname == player.name:
+				print('REJECTED New connection: "' + cname + '" at ' + caddr[0] + ' due to duplicate name')
+				csocket.sendall(NameMsg.bad)
+				badName = True
+				break
+		if badName:
+			continue
 
 		numConnections += 1
 		
+		newPlayer = True
+		for player in disconnected(players):
+			if player.matches(caddr, cname):
+				player.reconnect(csocket)
+				newPlayer = False
+				break
+		
 		if mode == lobby:
-			#We are in the lobby
-			connections.append((csocket, caddr, cname))
-			print("New connection: " + cname + " at " + caddr[0])
+			if newPlayer:
+				players.append(Player(csocket, caddr, cname))
+			print('ACCEPTED New connection: "' + cname + '" at ' + str(caddr))
 			csocket.sendall(LobbyMsg.connect)
 			threading.Thread(target=clientThread, args=((csocket, caddr, cname))).start()
-
-		elif mode == inCombat:
-			for player in disconnected(players):
-				if player.matches(caddr, cname):
-					player.reconnect(csocket)
-					break
 			
 def clientThread(csocket, caddr, cname):
-	global numConnections, numReady, everyoneReady
+	global numConnections, numReady, everyoneReady, players
 
 	isReady = False
 
@@ -83,13 +95,14 @@ def clientThread(csocket, caddr, cname):
 		if msg == b'':
 			raise socket.error
 	except socket.error as e:
-		csocket.close()
-		numConnections -= 1
-		connections.pop(connections.index((csocket, caddr, cname)))
-		if isReady == True:
-			numReady -= 1
-		print(caddr[0] + ' closed!')
-		return
+		for player in players:
+			if player.matches(caddr, cname):
+				player.disconnect()
+				numConnections -= 1
+				if isReady == True:
+					numReady -= 1
+				print(caddr[0] + ' closed!')
+				return
 
 	#Client ready to begin
 	if msg == LobbyMsg.ready:
@@ -112,20 +125,16 @@ def clientThread(csocket, caddr, cname):
 			isReady = False
 			print(caddr[0] + " is not ready!")
 
-def createPlayers():
-	global connections
+def createCharacters():
+	global players
 
 	charFile = open('characters.json', 'r')
 	characters = json.load(charFile)
 	characters = characters["Characters"]
 	shuffle(characters)
 
-	plist = []
-
-	for i, (csocket, caddr, cname) in enumerate(connections):
-		plist.append(Player(csocket, caddr, cname, characters[i]))
-
-	return plist
+	for i, player in enumerate(players):
+		player.setCharacter(characters[i])
 	
 def createMonsters():
 
@@ -144,7 +153,7 @@ def createMonsters():
 def getConnectedPlayers(players):
 	connPlayers = []
 	for player in players:
-		if player.isConnected:
+		if player.isConnected():
 			connPlayers.append(player)
 			
 	return connPlayers
@@ -248,12 +257,12 @@ def main():
 		everyoneReady.wait()
 	everyoneReady.release()
 
-	for client in connections:
-		client[0].sendall(LobbyMsg.beginGame)
+	for player in players:
+		player.send(LobbyMsg.beginGame)
 	mode = inCombat
 
 	print("Ready set go!")
-	players = createPlayers()
+	createCharacters()
 	for player in players:
 		player.sendPartyStats(players)
 
@@ -272,9 +281,9 @@ def main():
 		print('The party has lost')
 	elif res == 1:
 		end = EndMsg.win
-		print('the party has won')
+		print('The party has won')
 	else:
-		print('the party has left/disconnected ;~;')
+		print('The party has left/disconnected ;~;')
 	for player in connected(players):
 		player.send(end)
 		if player.recv() != EndMsg.ack:

@@ -58,7 +58,7 @@ def main():
 	csocket.connect((saddr, 80))
 
 	try:
-		csocket.sendall(NameMsg.head + cname.encode())
+		csocket.sendall(NameMsg.name + cname.encode())
 		while(1):
 			try:
 				msg = csocket.recv(1024)
@@ -69,6 +69,10 @@ def main():
 				exit()
 
 			msgHead = msg[0:headerLen]
+			
+			if msg == NameMsg.bad:
+				print('Name already taken!')
+				exit()
 				
 			if msgHead == LobbyMsg.head:
 				enterLobby(csocket, msg)

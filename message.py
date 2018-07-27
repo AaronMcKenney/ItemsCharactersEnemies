@@ -8,6 +8,13 @@ optionLen = headerLen + 2
 #Client sends name upon connecting to server
 class NameMsg:
 	head = b'N'
+	
+	#Client sends name
+	name = head + b'N:'
+	
+	#Server either accepts the name and adds the client or rejects the client
+	good = head + b'G:'
+	bad = head + b'B:'
 
 class LobbyMsg:
 	head = b'L'
@@ -16,6 +23,7 @@ class LobbyMsg:
 	connect = head + b'C:'
 	waitOnOthers = head + b'W:'
 	beginGame = head + b'B:'
+	
 	#Client related lobby messages
 	ready = head + b'Y:'
 	notReady = head + b'N:'
@@ -29,6 +37,7 @@ class StatsMsg:
 	self = head + b'Y:'
 	party = head + b'P:'
 	monster = head + b'M:'
+	
 	#Cliient related stats messages
 	ack = head + b'A:'
 
@@ -37,8 +46,10 @@ class AttackMsg:
 	
 	#Server sends number of attacks to client and requests client to pick one
 	request = head + b'Q:'
+	
 	#Client responds with an attack
 	response = head + b'A:'
+	
 	#Server calculates an attack, and relays the 
 	#results to all clients.
 	#Client responds with an ack
@@ -51,6 +62,7 @@ class EndMsg:
 	
 	#Server says party wins
 	win = head + b'W:'
+	
 	#Server says party loses
 	loss = head + b'L:'
 	

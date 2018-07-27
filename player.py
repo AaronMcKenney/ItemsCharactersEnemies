@@ -5,13 +5,12 @@ from message import *
 
 class Player(object):
 
-	def __init__(self, psocket, paddr, pname, charinfo):
+	def __init__(self, psocket, paddr, pname):
 		self.sock = psocket
 		self.connected = True
 		self.waitForNextBattle = False
 		self.addr = paddr
 		self.name = pname
-		self.character = Character(charinfo['Name'], charinfo['Description'], charinfo['Health'], charinfo['Attacks'])
 
 	def __del__(self):
 		self.sock.close()
@@ -52,37 +51,6 @@ class Player(object):
 		self.connected = False
 		self.waitForNextBattle = True
 
-	def isConnected(self):
-		return self.connected
-		
-	def enable(self):
-		if self.connected == False and self.waitForNextBattle == True:
-			self.connected = True
-			self.waitForNextBattle = False
-		
-	def matches(self, addr, name):
-		if self.addr == addr and self.name == name:
-			return True
-		return False
-		
-	def getName(self):
-		return self.name
-		
-	def getCharName(self):
-		return self.character.getName()
-			
-	def getStats(self):
-		return b'Player name: ' + self.name.encode() + b'\n' + self.character.getStats()
-
-	def getAttacksStr(self):
-		return self.character.getAttacksStr()
-
-	def getAttack(self, index):
-		return self.character.getAttack(index)
-		
-	def getNumAttacks(self):
-		return self.character.getNumAttacks()
-
 	def sendPartyStats(self, plist):
 		ownStats = b'You:\n'
 		if len(plist) != 1:
@@ -101,10 +69,44 @@ class Player(object):
 		#List your own stats first, and then list everyone elses
 		self.send(StatsMsg.party + ownStats + otherPlayerStats)
 		if self.recv() != StatsMsg.ack:
-			print(self.name + b' did not receive party stats')
+			print(self.name + ' did not receive party stats')
+		
+	def enable(self):
+		if self.connected == False and self.waitForNextBattle == True:
+			self.connected = True
+			self.waitForNextBattle = False
+		
+	def matches(self, addr, name):
+		if self.addr[0] == addr[0] and self.name == name:
+			return True
+		return False
+		
+	def hit(self, monster, attack):
+		return self.character.hit(monster, attack)
+		
+	def isConnected(self):
+		return self.connected
 		
 	def isAlive(self):
 		return self.character.isAlive()
+		
+	def getName(self):
+		return self.name
+		
+	def getCharName(self):
+		return self.character.getName()
+			
+	def getStats(self):
+		return b'Player name: ' + self.name.encode() + b'\n' + self.character.getStats()
+
+	def getAttacksStr(self):
+		return self.character.getAttacksStr()
+
+	def getAttack(self, index):
+		return self.character.getAttack(index)
+		
+	def getNumAttacks(self):
+		return self.character.getNumAttacks()
 	
 	def getLegalAttackIndex(self, attackStr):
 		#Takes in a client's chosen attack and ensures
@@ -124,6 +126,7 @@ class Player(object):
 		if attack < 1 or attack > self.character.getNumAttacks():
 			return -1
 		return attack
+	
+	def setCharacter(self, charinfo):
+		self.character = Character(charinfo['Name'], charinfo['Description'], charinfo['Health'], charinfo['Attacks'])
 		
-	def hit(self, monster, attack):
-		return self.character.hit(monster, attack)
