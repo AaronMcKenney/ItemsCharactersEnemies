@@ -1,4 +1,7 @@
+#Standard Libraries
 import random
+
+#In house libraries
 import player
 
 class Monster(object):

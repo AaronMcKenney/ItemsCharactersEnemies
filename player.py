@@ -1,5 +1,7 @@
+#Standard Libraries
 import socket
 
+#In house libraries
 from character import *
 from message import *
 
@@ -48,8 +50,13 @@ class Player(object):
 	
 	def reconnect(self, newSock):
 		self.sock = newSock
-		self.connected = False
+		self.connected = True
 		self.waitForNextBattle = True
+	
+	def enable(self):
+		if self.connected == False and self.waitForNextBattle == True:
+			self.connected = True
+			self.waitForNextBattle = False
 
 	def sendPartyStats(self, plist):
 		ownStats = b'You:\n'
@@ -70,11 +77,6 @@ class Player(object):
 		self.send(StatsMsg.party + ownStats + otherPlayerStats)
 		if self.recv() != StatsMsg.ack:
 			print(self.name + ' did not receive party stats')
-		
-	def enable(self):
-		if self.connected == False and self.waitForNextBattle == True:
-			self.connected = True
-			self.waitForNextBattle = False
 		
 	def matches(self, addr, name):
 		if self.addr[0] == addr[0] and self.name == name:
@@ -113,13 +115,13 @@ class Player(object):
 		#that they picked a legal move
 		#Returns -1 if bad/illegal, or index in attack list
 		
-		if len(attackStr) > optionLen + 1:
+		if len(attackStr) > OPCODE_LEN + 1:
 			return -1
-		option = attackStr[0:optionLen]
-		if option != AttackMsg.response:
+		opcode = attackStr[0:OPCODE_LEN]
+		if opcode != AttackMsg.response:
 			return -1
 		try:
-			attack = int(attackStr[optionLen:])
+			attack = int(attackStr[OPCODE_LEN:])
 		except ValueError:
 			return -1
 		

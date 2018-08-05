@@ -1,3 +1,4 @@
+#Standard Libraries
 import sys
 import time
 import socket
@@ -5,14 +6,15 @@ import threading
 import json
 from random import shuffle
 
+#In house libraries
 from message import *
 from player import *
 from monster import *
 
-#Global vars
-numConnections = 0
-numReady = 0
-everyoneReady = threading.Condition()
+#Globals
+g_num_connections = 0
+g_num_ready = 0
+g_everyone_ready = threading.Condition()
 players = []
 
 #mode that the game is in and potential values (enum) for mode
@@ -23,7 +25,7 @@ mode = lobby
 
 def connected(players):
 	connectedPlayers = []
-
+	
 	for player in players:
 		if player.isConnected():
 			connectedPlayers.append(player)
@@ -44,31 +46,31 @@ def enableAll(players):
 		player.enable()
 	
 def serverThread(ssocket):
-	global numConnections, players
+	global g_num_connections, players
 
 	while 1:
 		(csocket, caddr) = ssocket.accept()
 		#Upon connection, get the client's name
 		try:
 			msg = csocket.recv(1024)
-			if msg == b'' or msg[0:optionLen] != NameMsg.name:
+			if msg == b'' or msg[0:OPCODE_LEN] != NameMsg.name:
 				raise socket.error
 		except socket.error as e:
 			csocket.close()
 			return
-		cname = msg[optionLen:].decode()
+		cname = msg[OPCODE_LEN:].decode()
 		
 		badName = False
 		for player in connected(players):
 			if cname == player.name:
-				print('REJECTED New connection: "' + cname + '" at ' + caddr[0] + ' due to duplicate name')
+				print('REJECTED connection: "' + cname + '" at ' + caddr[0] + ' due to duplicate name')
 				csocket.sendall(NameMsg.bad)
 				badName = True
 				break
 		if badName:
 			continue
-
-		numConnections += 1
+		
+		g_num_connections += 1
 		
 		newPlayer = True
 		for player in disconnected(players):
@@ -78,14 +80,16 @@ def serverThread(ssocket):
 				break
 		
 		if mode == lobby:
+			new_player_str = ''
 			if newPlayer:
 				players.append(Player(csocket, caddr, cname))
-			print('ACCEPTED New connection: "' + cname + '" at ' + str(caddr))
+				new_player_str = ' NEW'
+			print('ACCEPTED' + new_player_str + ' connection: "' + cname + '" at ' + str(caddr))
 			csocket.sendall(LobbyMsg.connect)
 			threading.Thread(target=clientThread, args=((csocket, caddr, cname))).start()
 			
 def clientThread(csocket, caddr, cname):
-	global numConnections, numReady, everyoneReady, players
+	global g_num_connections, g_num_ready, g_everyone_ready, players
 
 	isReady = False
 
@@ -98,30 +102,30 @@ def clientThread(csocket, caddr, cname):
 		for player in players:
 			if player.matches(caddr, cname):
 				player.disconnect()
-				numConnections -= 1
+				g_num_connections -= 1
 				if isReady == True:
-					numReady -= 1
+					g_num_ready -= 1
 				print(caddr[0] + ' closed!')
 				return
 
 	#Client ready to begin
 	if msg == LobbyMsg.ready:
 		if isReady != True:
-			numReady += 1
+			g_num_ready += 1
 			isReady = True
 			print(cname + " is ready!")
 
-		if numReady == numConnections:
+		if g_num_ready == g_num_connections:
 			#Notify main thread to start game
-			everyoneReady.acquire()
-			everyoneReady.notifyAll()
-			everyoneReady.release()
+			g_everyone_ready.acquire()
+			g_everyone_ready.notifyAll()
+			g_everyone_ready.release()
 		else:
 			csocket.sendall(LobbyMsg.waitOnOthers)
 
 	elif msg == LobbyMsg.notReady:
 		if isReady != False:
-			numReady -= 1
+			g_num_ready -= 1
 			isReady = False
 			print(caddr[0] + " is not ready!")
 
@@ -137,7 +141,6 @@ def createCharacters():
 		player.setCharacter(characters[i])
 	
 def createMonsters():
-
 	monstFile = open('monsters.json', 'r')
 	monsters = json.load(monstFile)
 	monsters = monsters["Monsters"]
@@ -236,7 +239,7 @@ def battle(curMonster):
 					return -1
 				
 def main():
-	global everyoneReady, mode, players
+	global g_everyone_ready, mode, players
 
 	ssocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	try:
@@ -251,11 +254,11 @@ def main():
 	threading.Thread(target=serverThread, args=(ssocket,)).start()
 
 	#If everyone is ready, start the game
-	everyoneReady.acquire()
-	while(numReady != numConnections or numConnections == 0):
+	g_everyone_ready.acquire()
+	while(g_num_ready != g_num_connections or g_num_connections == 0):
 		#Don't start the game until all players in lobby are ready
-		everyoneReady.wait()
-	everyoneReady.release()
+		g_everyone_ready.wait()
+	g_everyone_ready.release()
 
 	for player in players:
 		player.send(LobbyMsg.beginGame)

@@ -1,9 +1,15 @@
-#Messages must have the same format between the client and server
+#Standard Libraries
+import socket
 
+#Messages must have the same format between the client and server
+#This library ensures that this occurs
+
+#Constants
 #Headers must have the same length
 #Headers must be unique
-headerLen = 1
-optionLen = headerLen + 2
+HEADER_LEN = 1
+OPCODE_LEN = HEADER_LEN + 2
+BAD_OPCODE = b''
 
 #Client sends name upon connecting to server
 class NameMsg:
@@ -68,3 +74,44 @@ class EndMsg:
 	
 	#Client says ack
 	ack = head + b'A:'
+
+class Msg:
+	def __init__(self, opcode=BAD_OPCODE, str=''):
+		self.opcode = opcode
+		if len(opcode) >= OPCODE_LEN:
+			self.head = opcode[0:HEADER_LEN]
+		else:
+			self.head = BAD_OPCODE
+		self.str = str
+	
+	def Send(self, receiver_name, sock):
+		data = self.opcode + self.str.encode()
+		
+		try:
+			sock.sendall(data)
+		except socket.error:
+			print('Send Error: Failed to send data to "' + receiver_name + '"')
+			return False
+			
+		return True
+		
+	def Recv(self, sender_name, sock, exp_opcode=BAD_OPCODE):
+		(self.opcode, self.str) = (BAD_OPCODE, '')
+		
+		try:
+			data = sock.recv(1024)
+			if len(data) < OPCODE_LEN:
+				raise socket.error	
+				
+			(self.opcode, self.str) = (data[0:OPCODE_LEN], data[OPCODE_LEN:].decode())
+			if exp_opcode != BAD_OPCODE and self.opcode != exp_opcode:
+				raise socket.error
+				
+		except socket.error:
+			exp_opcode_str = b''
+			if exp_opcode != BAD_OPCODE:
+				exp_opcode_str = b', Expected Opcode was: ' + exp_opcode_str
+			print('Receive Error: Got "' + data.decode() +  '" from "' + sender_name + '"' + exp_opcode_str.decode())
+		
+		return Msg(self.opcode, self.str)
+		
