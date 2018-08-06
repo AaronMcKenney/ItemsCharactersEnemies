@@ -54,8 +54,7 @@ class Player(object):
 		self.waitForNextBattle = True
 	
 	def enable(self):
-		if self.connected == False and self.waitForNextBattle == True:
-			self.connected = True
+		if self.connected == True and self.waitForNextBattle == True:
 			self.waitForNextBattle = False
 
 	def sendPartyStats(self, plist):

@@ -11,17 +11,17 @@ from message import *
 from player import *
 from monster import *
 
+#Constants
+#mode that the game is in and potential values (enum) for mode
+LOBBY = 0
+IN_COMBAT = 1
+
 #Globals
 g_num_connections = 0
 g_num_ready = 0
 g_everyone_ready = threading.Condition()
-players = []
-
-#mode that the game is in and potential values (enum) for mode
-lobby = 0
-inCombat = 1
-
-mode = lobby
+g_players = []
+g_mode = LOBBY
 
 def connected(players):
 	connectedPlayers = []
@@ -46,7 +46,7 @@ def enableAll(players):
 		player.enable()
 	
 def serverThread(ssocket):
-	global g_num_connections, players
+	global g_num_connections, g_players
 
 	while 1:
 		(csocket, caddr) = ssocket.accept()
@@ -61,7 +61,7 @@ def serverThread(ssocket):
 		cname = msg[OPCODE_LEN:].decode()
 		
 		badName = False
-		for player in connected(players):
+		for player in connected(g_players):
 			if cname == player.name:
 				print('REJECTED connection: "' + cname + '" at ' + caddr[0] + ' due to duplicate name')
 				csocket.sendall(NameMsg.bad)
@@ -73,23 +73,23 @@ def serverThread(ssocket):
 		g_num_connections += 1
 		
 		newPlayer = True
-		for player in disconnected(players):
+		for player in disconnected(g_players):
 			if player.matches(caddr, cname):
 				player.reconnect(csocket)
 				newPlayer = False
 				break
 		
-		if mode == lobby:
+		if g_mode == LOBBY:
 			new_player_str = ''
 			if newPlayer:
-				players.append(Player(csocket, caddr, cname))
+				g_players.append(Player(csocket, caddr, cname))
 				new_player_str = ' NEW'
 			print('ACCEPTED' + new_player_str + ' connection: "' + cname + '" at ' + str(caddr))
 			csocket.sendall(LobbyMsg.connect)
 			threading.Thread(target=clientThread, args=((csocket, caddr, cname))).start()
 			
 def clientThread(csocket, caddr, cname):
-	global g_num_connections, g_num_ready, g_everyone_ready, players
+	global g_num_connections, g_num_ready, g_everyone_ready, g_players
 
 	isReady = False
 
@@ -99,7 +99,7 @@ def clientThread(csocket, caddr, cname):
 		if msg == b'':
 			raise socket.error
 	except socket.error as e:
-		for player in players:
+		for player in g_players:
 			if player.matches(caddr, cname):
 				player.disconnect()
 				g_num_connections -= 1
@@ -130,14 +130,14 @@ def clientThread(csocket, caddr, cname):
 			print(caddr[0] + " is not ready!")
 
 def createCharacters():
-	global players
+	global g_players
 
 	charFile = open('characters.json', 'r')
 	characters = json.load(charFile)
 	characters = characters["Characters"]
 	shuffle(characters)
 
-	for i, player in enumerate(players):
+	for i, player in enumerate(g_players):
 		player.setCharacter(characters[i])
 	
 def createMonsters():
@@ -153,14 +153,6 @@ def createMonsters():
 
 	return mlist
 	
-def getConnectedPlayers(players):
-	connPlayers = []
-	for player in players:
-		if player.isConnected():
-			connPlayers.append(player)
-			
-	return connPlayers
-	
 def partyLives(players):
 	for player in players:
 		if player.isAlive():
@@ -171,23 +163,23 @@ def battle(curMonster):
 	#Battle between players and one monster
 	#Returns 1 if players win, -1 if monster wins,
 	#and 0 if all players disconnects
-	global players
+	global g_players
 	
 	#Ensures that a player can only be lost from this battle
-	if len(players) == 0:
+	if len(g_players) == 0:
 		print('no players in battle!')
 		return 0
-	for player in connected(players):
+	for player in connected(g_players):
 		player.send(StatsMsg.monster + curMonster.getStats())
 		if player.recv() != StatsMsg.ack:
 			player.disconnect()
 		
 	#Get turn order
-	turnList = list(players) #list() creates deep copy
+	turnList = list(g_players) #list() creates deep copy
 	turnList.append(curMonster)
 	shuffle(turnList)
 	
-	while(curMonster.isAlive() and partyLives(connected(players))):
+	while(curMonster.isAlive() and partyLives(connected(g_players))):
 		for entity in turnList:
 			if type(entity) is Player and entity.isAlive():
 				#Ask the player to choose an attack
@@ -200,14 +192,14 @@ def battle(curMonster):
 					turnList.remove(entity)
 					entity.disconnect()
 					print(entity.getName() + ' did not recv attack index msg. Booting from battle')
-					if len(connected(players)) == 0:
+					if len(connected(g_players)) == 0:
 						return 0
 					continue
 				chosenAttack = entity.getAttack(attackIndex-1)
 
 				#Send results of attack to all players
 				resultStr = curMonster.hit(entity, chosenAttack)
-				for player in connected(players):
+				for player in connected(g_players):
 					player.send(AttackMsg.result + resultStr)
 					msg = player.recv()
 					if msg != AttackMsg.ack:
@@ -216,7 +208,7 @@ def battle(curMonster):
 						turnList.remove(player)
 						player.disconnect()
 						print(player.getName() + ' did not recv player attack attack msg. Booting from battle')
-				if len(connected(players)) == 0:
+				if len(connected(g_players)) == 0:
 					return 0
 				if not curMonster.isAlive():
 					turnList.remove(curMonster)
@@ -224,22 +216,22 @@ def battle(curMonster):
 				
 			else:
 				#Monster's turn
-				(chosenPlayer, chosenAttack) = curMonster.getRandAttack(players)
+				(chosenPlayer, chosenAttack) = curMonster.getRandAttack(g_players)
 				resultStr = chosenPlayer.hit(curMonster, chosenAttack)
-				for player in connected(players):
+				for player in connected(g_players):
 					player.send(AttackMsg.result + resultStr)
 					msg = player.recv()
 					if msg != AttackMsg.ack:
 						turnList.remove(player)
 						player.disconnect()
 						print(player.getName() + ' did not recv monster attack attack msg. Booting from battle')
-				if len(connected(players)) == 0:
+				if len(connected(g_players)) == 0:
 					return 0
-				if not partyLives(players):
+				if not partyLives(g_players):
 					return -1
 				
 def main():
-	global g_everyone_ready, mode, players
+	global g_everyone_ready, g_mode, g_players
 
 	ssocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	try:
@@ -260,21 +252,21 @@ def main():
 		g_everyone_ready.wait()
 	g_everyone_ready.release()
 
-	for player in players:
+	for player in g_players:
 		player.send(LobbyMsg.beginGame)
-	mode = inCombat
+	g_mode = IN_COMBAT
 
 	print("Ready set go!")
 	createCharacters()
-	for player in players:
-		player.sendPartyStats(players)
+	for player in g_players:
+		player.sendPartyStats(g_players)
 
 	monsters = createMonsters()
 	
 	#Start Game 
 	res = 0
 	for monster in monsters:
-		enableAll(players)
+		enableAll(g_players)
 		res = battle(monster)
 		if res != 1:
 			break
@@ -287,7 +279,7 @@ def main():
 		print('The party has won')
 	else:
 		print('The party has left/disconnected ;~;')
-	for player in connected(players):
+	for player in connected(g_players):
 		player.send(end)
 		if player.recv() != EndMsg.ack:
 				print(player.getName() + ' did not get EndMsg')		
